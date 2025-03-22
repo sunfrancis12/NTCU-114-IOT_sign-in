@@ -4,7 +4,7 @@ import os
 import sqlite3
 from datetime import datetime
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", template_folder="templates")
 
 # 確保資料庫存在
 def init_db():
@@ -32,21 +32,28 @@ def generate_qr():
     qr.save("qrcode.png")
     return jsonify({"qr_url": qr_data})
 
+@app.route("/scan")
+def scan_page():
+    session = request.args.get("session")
+    return render_template("scan.html", session=session)
+
 @app.route("/scan", methods=["POST"])
 def scan_qr():
     data = request.json
     name = data.get("name")
+    session = data.get("session")
+    
     if not name:
         return jsonify({"error": "Missing name"}), 400
     
     conn = sqlite3.connect("attendance.db")
     c = conn.cursor()
-    c.execute("INSERT INTO attendance (name, timestamp) VALUES (?, ?)",
-              (name, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+    c.execute("INSERT INTO attendance (name, session, timestamp) VALUES (?, ?, ?)",
+              (name, session, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
     conn.commit()
     conn.close()
     
-    return jsonify({"message": "Attendance recorded"})
+    return jsonify({"message": "簽到成功！"})
 
 @app.route("/attendance", methods=["GET"])
 def get_attendance():

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code 點名系統</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>QR Code 點名系統</h1>
+    <img id="qrCode" src="" alt="QR Code">
+    <button onclick="generateQRCode()">重新生成 QR Code</button>
+    <h2>簽到記錄</h2>
+    <ul id="attendanceList"></ul>
+
+    <script>
+        async function generateQRCode() {
+            const response = await axios.get('/generate_qr');
+            document.getElementById('qrCode').src = response.data.qr_url;
+        }
+
+        async function fetchAttendance() {
+            const response = await axios.get('/attendance');
+            const list = document.getElementById('attendanceList');
+            list.innerHTML = '';
+            response.data.forEach(record => {
+                const li = document.createElement('li');
+                li.textContent = `${record.name} - ${record.timestamp}`;
+                list.appendChild(li);
+            });
+        }
+
+        // 初始化載入
+        generateQRCode();
+        fetchAttendance();
+    </script>
+</body>
+</html>

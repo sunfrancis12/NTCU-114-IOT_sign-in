@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code 點名系統</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        /* 左側 QR Code 區域 */
+        .left-panel {
+            width: 50%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            border-right: 2px solid #ddd;
+        }
+
+        #qrCode {
+            width: 250px;
+            height: 250px;
+            border: 8px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background: #007BFF;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        /* 右側簽到列表 */
+        .right-panel {
+            width: 50%;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .attendance-list {
+            list-style: none;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 10px;
+            border-radius: 10px;
+            background: white;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .attendance-list li {
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .attendance-list li:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="left-panel">
+        <h1>QR Code 點名</h1>
+        <img id="qrCode" src="" alt="QR Code">
+        <button onclick="generateQRCode()">重新生成 QR Code</button>
+    </div>
+
+    <div class="right-panel">
+        <h1>簽到記錄</h1>
+        <ul id="attendanceList" class="attendance-list"></ul>
+    </div>
+
+    <script>
+        async function generateQRCode() {
+            const response = await axios.get('/generate_qr');
+            document.getElementById('qrCode').src = response.data.qr_base64;
+        }
+
+        async function fetchAttendance() {
+            const response = await axios.get('/attendance');
+            const list = document.getElementById('attendanceList');
+            list.innerHTML = '';
+            response.data.forEach(record => {
+                const li = document.createElement('li');
+                li.textContent = `${record.name} - ${record.timestamp}`;
+                list.appendChild(li);
+            });
+        }
+
+        // 初始化載入
+        generateQRCode();
+        fetchAttendance();
+
+        // 每 10 秒更新一次簽到記錄
+        setInterval(fetchAttendance, 10000);
+    </script>
+</body>
+</html>

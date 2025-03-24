@@ -16,7 +16,7 @@
     <script>
         async function generateQRCode() {
             const response = await axios.get('/generate_qr');
-            document.getElementById('qrCode').src = response.data.qr_url;
+            document.getElementById('qrCode').src = response.data.qr_base64;
         }
 
         async function fetchAttendance() {

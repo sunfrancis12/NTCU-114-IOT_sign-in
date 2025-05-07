@@ -1,0 +1,5 @@
+flask
+flask_sqlalchemy 
+flask_migrate
+qrcode [pil]
+mysql-connector-python

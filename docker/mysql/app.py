@@ -6,10 +6,31 @@ import io
 from datetime import datetime
 import mysql.connector
 import os
+import time
 
 # 本地ip
 hostname = socket.gethostname()
 local_ip = socket.gethostbyname(hostname)
+
+def wait_for_db():
+    time.sleep(10)  # 先等10秒，粗略處理慢啟動
+    while True:
+        try:
+            connection = mysql.connector.connect(
+                host=os.environ.get("DB_HOST", "localhost"),
+                user=os.environ.get("DB_USER", "root"),
+                password=os.environ.get("DB_PASSWORD", "example"),
+                database=os.environ.get("DB_NAME", "attendance")
+            )
+            print("MySQL is ready!")
+            return connection  # ⚠️ 回傳 connection
+        except mysql.connector.Error as err:
+            print("MySQL not ready, retrying...")
+            time.sleep(5)
+
+# 使用回傳的 connection
+connection = wait_for_db()
+
 
 #資料庫
 connection = mysql.connector.connect(
@@ -26,7 +47,7 @@ def init_db():
     # 建立游標物件
     cursor = connection.cursor()
     cursor.execute('''CREATE TABLE IF NOT EXISTS attendance (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id INT AUTO_INCREMENT PRIMARY KEY 
                     name TEXT,
                     session TEXT,
                     timestamp TEXT,
@@ -74,11 +95,10 @@ def scan_qr():
 
     # 建立游標物件
     cursor = connection.cursor()
-    cursor.execute("INSERT INTO attendance (name, session, timestamp, date) VALUES (?, ?, ?, ?)",
+    cursor.execute("INSERT INTO attendance (name, session, timestamp, date) VALUES (%s, %s, %s, %s)",
                 (name, session, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), today))
     connection.commit()
     cursor.close()
-    connection.close()
 
     return jsonify({"message": "簽到成功！"})
 

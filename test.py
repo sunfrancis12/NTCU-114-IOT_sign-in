@@ -3,37 +3,30 @@ import qrcode
 import base64
 import socket
 import io
+import sqlite3
 from datetime import datetime
-import mysql.connector
-import os
 
 # 本地ip
 hostname = socket.gethostname()
 local_ip = socket.gethostbyname(hostname)
+    
 
-#資料庫
-connection = mysql.connector.connect(
-    host=os.environ.get("DB_HOST", "localhost"),     # 這裡會是 'db'
-    user=os.environ.get("DB_USER", "root"),
-    password=os.environ.get("DB_PASSWORD", "example"),
-    database=os.environ.get("DB_NAME", "attendance")
-)
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
 
-#MySQL資料庫初始化
+# 確保資料庫存在
 def init_db():
-    # 建立游標物件
-    cursor = connection.cursor()
-    cursor.execute('''CREATE TABLE IF NOT EXISTS attendance (
+    conn = sqlite3.connect("attendance.db")
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS attendance (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT,
                     session TEXT,
                     timestamp TEXT,
                     date TEXT
                 )''')
-    cursor.close()
-    connection.close()
+    conn.commit()
+    conn.close()
 
 init_db()
 
@@ -72,25 +65,24 @@ def scan_qr():
 
     today = datetime.now().strftime("%Y-%m-%d")
 
-    # 建立游標物件
-    cursor = connection.cursor()
-    cursor.execute("INSERT INTO attendance (name, session, timestamp, date) VALUES (?, ?, ?, ?)",
-                (name, session, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), today))
-    connection.commit()
-    cursor.close()
-    connection.close()
+    conn = sqlite3.connect("attendance.db")
+    c = conn.cursor()
+    c.execute("INSERT INTO attendance (name, session, timestamp, date) VALUES (?, ?, ?, ?)",
+              (name, session, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), today))
+    conn.commit()
+    conn.close()
 
     return jsonify({"message": "簽到成功！"})
 
 @app.route("/attendance", methods=["GET"])
 def get_attendance():
     today = datetime.now().strftime("%Y-%m-%d")
-    
-    cursor = connection.cursor()
-    cursor.execute("SELECT name, timestamp FROM attendance WHERE date = ?", (today,))
-    records = cursor.fetchall()
-    cursor.close()
-    
+
+    conn = sqlite3.connect("attendance.db")
+    c = conn.cursor()
+    c.execute("SELECT name, timestamp FROM attendance WHERE date = ?", (today,))
+    records = c.fetchall()
+    conn.close()
     return jsonify([{"name": r[0], "timestamp": r[1]} for r in records])
 
 if __name__ == "__main__":

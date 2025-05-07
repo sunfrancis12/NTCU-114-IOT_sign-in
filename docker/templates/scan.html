@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>簽到</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>簽到頁面</h1>
+    <p>請輸入你的姓名：</p>
+    <input type="text" id="studentName" placeholder="輸入姓名">
+    <button onclick="submitAttendance()">提交簽到</button>
+    
+    <script>
+        async function submitAttendance() {
+            const name = document.getElementById("studentName").value;
+            if (!name) {
+                alert("請輸入姓名！");
+                return;
+            }
+            const session = new URLSearchParams(window.location.search).get("session");
+            
+            try {
+                const response = await axios.post("/scan", { name, session });
+                alert(response.data.message);
+            } catch (error) {
+                alert("簽到失敗，請稍後再試！");
+            }
+        }
+    </script>
+</body>
+</html>

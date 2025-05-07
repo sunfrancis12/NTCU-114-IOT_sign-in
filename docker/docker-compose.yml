@@ -1,0 +1,30 @@
+services:
+
+  db:
+    image: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: attendance
+    volumes:
+      - db:/var/lib/mysql
+    ports:
+      - "3306:3306"
+  
+  python-backend:
+    depends_on:
+      - db
+    build: . #build python-backend Dockerfile
+    restart: always
+    environment:
+      DB_HOST: db              # 👈 這裡是關鍵！用服務名稱作為主機名稱
+      DB_USER: root
+      DB_PASSWORD: example
+      DB_NAME: attendance   # 你要連的資料庫名稱（可自行建立）
+    ports:
+      - "5000:5000"
+    container_name: python-backend
+
+volumes:
+  db:
+
